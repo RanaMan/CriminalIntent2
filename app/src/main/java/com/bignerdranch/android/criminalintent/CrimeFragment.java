@@ -36,11 +36,15 @@ public class CrimeFragment extends Fragment {
     public static final String DIALOG_DATE = "DialogDate";
     public static final int REQUEST_DATE_CODE = 0;
 
+    public static final String DIALOG_LIST = "DialogList";
+    public static final int REQUEST_LIST_CODE = 1;
+
     //This is our crime
-    private Crime mCrime;
-    private EditText mTitleField;
-    private Button mDateButton;
-    private CheckBox mCrimeSolvedCheckbox;
+    private Crime       mCrime;
+    private EditText    mTitleField;
+    private Button      mDateButton;
+    private CheckBox    mCrimeSolvedCheckbox;
+    private Button      mSaveCrimeButton;
 
     private static final String TAG = "**CRIME FRAGMENT**";
 
@@ -80,6 +84,7 @@ public class CrimeFragment extends Fragment {
         mTitleField = (EditText) v.findViewById(R.id.crime_title);
         mDateButton = (Button)v.findViewById(R.id.crime_date);
         mCrimeSolvedCheckbox = (CheckBox)v.findViewById(R.id.crime_solved);
+        mSaveCrimeButton = (Button)v.findViewById(R.id.crime_save_crime);
 
         thisItemWasLoaded(mCrime.getId());
 
@@ -105,16 +110,22 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        //Crazy button shit here
+        //mDateButton Logic here
         mDateButton.setText(mCrime.getDate().toString());
         mDateButton.setEnabled(true);
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //This was used to get to the first/last item on the PageViewer
+                //This was used to get to the first/last item on the PageViewer **Example code**
 //                ViewPager mViewPager = (ViewPager)getActivity().findViewById(R.id.crime_view_pager);
 //                mViewPager.setCurrentItem(0);
                 FragmentManager manager = getFragmentManager();
+
+                //Just and example on how to add a Dialog of Radio buttons
+//                DialogListFragment list = DialogListFragment.newInstance(new Date());
+//                list.setTargetFragment(CrimeFragment.this, REQUEST_LIST_CODE);
+//                list.show(manager, DIALOG_LIST);
+
                 DatePickerFragment dialog = DatePickerFragment.newInstance(new Date());
                 //The TargetFragment seems wierd,,, it is the "invoking Fragment"
                 dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE_CODE);
@@ -125,7 +136,6 @@ public class CrimeFragment extends Fragment {
         });
 
         //Now time for Checkbox love
-
         mCrimeSolvedCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -133,12 +143,14 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+
+
         return  v;
     }
 
     private void thisItemWasLoaded(UUID crimeWhichWasUpdated){
         Intent data = new Intent();
-        data.putExtra(CRIME_FRAGMENT_CRIME_UPDATED, crimeWhichWasUpdated);
+        data.putExtra(CrimeActivity.EXTRA_CRIME_ID, crimeWhichWasUpdated);
         getActivity().setResult(RESULT_OK, data);
     }
 
@@ -159,5 +171,11 @@ public class CrimeFragment extends Fragment {
 
     }
 
+    @Override
+    public void onPause(){
+        super.onPause();
+
+        CrimeLab.getCrimeLab(getActivity()).updateCrime(mCrime);
+    }
 
 }

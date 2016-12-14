@@ -3,12 +3,17 @@ package com.bignerdranch.android.criminalintent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,10 +34,13 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    private boolean mSubtitleVisible;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -100,15 +108,18 @@ public class CrimeListFragment extends Fragment {
     private void updateUI(){
         //Context is strange here.. we got the activity
         CrimeLab crimeLab = CrimeLab.getCrimeLab(getActivity());
-        List<Crime> mCrimes = crimeLab.getCrimes();
+        List<Crime> crimes = crimeLab.getCrimes();
 
         if(mAdapter == null){
-            mAdapter = new CrimeAdapter(mCrimes);
+            mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         }else{
            // mAdapter.notifyDataSetChanged();
             Log.d(TAG, "updateUI: make sure we arent' calling this... :) ");
+            mAdapter.setCrimes(crimes);
+            mAdapter.notifyDataSetChanged();
         }
+        updateSubtitle();
     }
 
 
@@ -121,6 +132,7 @@ public class CrimeListFragment extends Fragment {
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         private Crime mCrime;
+
         private TextView mTitleTextView;
         private TextView mDateTextView;
         private ImageView mSolvedImageView;
@@ -130,6 +142,7 @@ public class CrimeListFragment extends Fragment {
         //ItemView comes from the parent RecyclerView.ViewHolder implementation...
         //WTF!
         public CrimeHolder(LayoutInflater inflater, ViewGroup parent){
+
             /*
             You want to inflate your own crime holder... don't have the adapter do it... (that is
              why it is here...)
@@ -150,7 +163,7 @@ public class CrimeListFragment extends Fragment {
 
             mDateTextView.setText(mDateFormat.format(mCrime.getDate()));
             mTitleTextView.setText(mCrime.getTitle());
-           //mSolvedImageView.setVisibility(View.VISIBLE);
+           mSolvedImageView.setVisibility(View.VISIBLE);
           //  mSolvedImageView.setVisibility(crime.isSolved() ? View.VISIBLE:View.GONE);
             Log.d(TAG, "bind: is case solved [" + mSolvedImageView.getVisibility() +"]");
         }
@@ -199,6 +212,10 @@ public class CrimeListFragment extends Fragment {
             return mCrimes.size();
         }
 
+        public void setCrimes(List<Crime> crimes){
+            mCrimes = crimes;
+        }
+
         /*
         Going to replace the crime which was updated... no matter what
         */
@@ -210,7 +227,64 @@ public class CrimeListFragment extends Fragment {
             }
             return -1;
         }
+    }
+
+
+    private void updateSubtitle(){
+        CrimeLab crimeLab = CrimeLab.getCrimeLab(getActivity());
+        int crimeCount = crimeLab.getCrimes().size();
+        String subtitle = getString(R.string.subtitle_format, crimeCount);
+
+        if(!mSubtitleVisible){
+            subtitle = null;
+        }
+
+        AppCompatActivity activity = (AppCompatActivity)getActivity();
+
+        //This is something which wasn't explained well... the support action bar....
+        activity.getSupportActionBar().setSubtitle(subtitle);
+
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragement_crime_list,menu);
+
+        MenuItem subTitleMenu = menu.findItem(R.id.show_subtitle);
+        if(mSubtitleVisible)
+            subTitleMenu.setTitle(R.string.show_subtitle);
+        else
+            subTitleMenu.setTitle(R.string.hide_subtitle);
+
+
 
 
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+
+        switch(item.getItemId()){
+            case R.id.new_crime:
+                Crime crime = new Crime();
+                CrimeLab.getCrimeLab(getActivity()).addCrime(crime);
+                Intent intent = CrimePagerActivity.newIntent(getActivity(),crime.getId());
+                startActivityForResult(intent, CrimePagerActivity.CRIME_ACTIVITY_CODE);
+                return true;
+
+
+            case R.id.show_subtitle:
+                mSubtitleVisible = !mSubtitleVisible;
+
+                //This redraws the menu.
+                getActivity().invalidateOptionsMenu();
+                updateSubtitle();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
 }

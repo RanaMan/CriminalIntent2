@@ -17,7 +17,11 @@ public class Crime {
 
     /* Public Constructor */
     public Crime(){
-        this.mId = UUID.randomUUID();
+        this(UUID.randomUUID());
+    }
+
+    public Crime(UUID id){
+        mId = id;
         mDate = new Date();
     }
 
