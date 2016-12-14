@@ -2,7 +2,9 @@ package com.bignerdranch.android.criminalintent;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,6 +17,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import java.util.Date;
 import java.util.UUID;
 
 import static android.app.Activity.RESULT_OK;
@@ -29,6 +32,9 @@ public class CrimeFragment extends Fragment {
 
     public static final String ARG_CRIME_ID = "com.bignerdranch.android.CRIME_FRAGMENT.CRIME_ID";
     public static final String CRIME_FRAGMENT_CRIME_UPDATED = "com.bignerdranch.android.CRIME_FRAGMENT.CRIME_UPDATED";
+
+    public static final String DIALOG_DATE = "DialogDate";
+    public static final int REQUEST_DATE_CODE = 0;
 
     //This is our crime
     private Crime mCrime;
@@ -108,6 +114,13 @@ public class CrimeFragment extends Fragment {
                 //This was used to get to the first/last item on the PageViewer
 //                ViewPager mViewPager = (ViewPager)getActivity().findViewById(R.id.crime_view_pager);
 //                mViewPager.setCurrentItem(0);
+                FragmentManager manager = getFragmentManager();
+                DatePickerFragment dialog = DatePickerFragment.newInstance(new Date());
+                //The TargetFragment seems wierd,,, it is the "invoking Fragment"
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE_CODE);
+
+                //Note that DIALOG Date is CrimeFragment's static argument, most likely needed for the onResume Method
+                dialog.show(manager,DIALOG_DATE);
             }
         });
 
@@ -127,6 +140,23 @@ public class CrimeFragment extends Fragment {
         Intent data = new Intent();
         data.putExtra(CRIME_FRAGMENT_CRIME_UPDATED, crimeWhichWasUpdated);
         getActivity().setResult(RESULT_OK, data);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        if(resultCode != RESULT_OK){
+            //the result wasn't OK... shitty
+            return;
+        }
+
+        //This is the code which we put in
+        if(requestCode == REQUEST_DATE_CODE){
+            Date date = (Date)data.getSerializableExtra(DatePickerFragment.DIALOG_DATE_CODE);
+            mCrime.setDate(date);
+            mDateButton.setText(mCrime.getDate().toString());
+
+        }
+
     }
 
 
