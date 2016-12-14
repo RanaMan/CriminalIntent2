@@ -25,6 +25,14 @@ public class CrimeLab {
         return sCrimeLab;
     }
 
+    public Crime getCrime(UUID id){
+        for(Crime crime:mCrimes){
+            if(crime.getId().equals(id)){
+                return crime;
+            }
+        }
+        return null;
+    }
     //This is the PRIVATE Constructor for CrimeLab
     private CrimeLab(Context context){
         mCrimes = new ArrayList<>();
@@ -44,12 +52,6 @@ public class CrimeLab {
         return mCrimes;
     }
 
-    public Crime getCrime(UUID id){
-        for(Crime crime:mCrimes){
-            if(crime.getId().equals(id)){
-                return crime;
-            }
-        }
-        return null;
-    }
+
+
 }

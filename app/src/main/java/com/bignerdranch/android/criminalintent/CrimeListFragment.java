@@ -1,5 +1,6 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -8,10 +9,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.UUID;
 
 import static android.content.ContentValues.TAG;
 
@@ -55,6 +59,37 @@ public class CrimeListFragment extends Fragment {
     }
 
     /*
+    onActivityResult
+     */
+    @Override
+    public void onActivityResult (int requestCode, int resultCode, Intent data){
+        Log.d(TAG, "onActivityResult: got a result");
+        if(resultCode != getActivity().RESULT_OK){
+            //well shit, had an issue...
+            Log.d(TAG, "onActivityResult: ERROR!! **************");
+            return;
+        }
+        if(requestCode == CrimeActivity.CRIME_ACTIVITY_CODE){
+            /*
+            We know that the Crime Activity returned the response...
+             let's find out which record we update...
+             */
+            UUID updatedCrimeID = CrimeFragment.crimeWhichWasUpdated(data);
+            Log.d(TAG, "onActivityResult: Coming back from CrimeFragment having viewed [" +
+                    updatedCrimeID +"] which is at posistion ["+ mAdapter.getPosition(updatedCrimeID) +"]");
+            //refreshCrime(updatedCrimeID);z
+            mAdapter.notifyItemChanged(mAdapter.getPosition(updatedCrimeID));
+            //We want to replace the crime in the adapter from the crime which is in the crimeLab...
+
+
+            Log.d(TAG, "onActivityResult: added a crime again just for fun... then we will replace it. ");
+
+
+        }
+
+    }
+
+    /*
     This is the wiring of everything all together:
      1. get the CrimeLab
      2. get the crimes and put them in a list.
@@ -66,10 +101,17 @@ public class CrimeListFragment extends Fragment {
         //Context is strange here.. we got the activity
         CrimeLab crimeLab = CrimeLab.getCrimeLab(getActivity());
         List<Crime> mCrimes = crimeLab.getCrimes();
-        mAdapter = new CrimeAdapter(mCrimes);
-        mCrimeRecyclerView.setAdapter(mAdapter);
 
+        if(mAdapter == null){
+            mAdapter = new CrimeAdapter(mCrimes);
+            mCrimeRecyclerView.setAdapter(mAdapter);
+        }else{
+           // mAdapter.notifyDataSetChanged();
+            Log.d(TAG, "updateUI: make sure we arent' calling this... :) ");
+        }
     }
+
+
 
     /*
     We have our holder defined in our listFragement, since this is the only place that it really
@@ -81,6 +123,9 @@ public class CrimeListFragment extends Fragment {
         private Crime mCrime;
         private TextView mTitleTextView;
         private TextView mDateTextView;
+        private ImageView mSolvedImageView;
+
+        private SimpleDateFormat mDateFormat;
 
         //ItemView comes from the parent RecyclerView.ViewHolder implementation...
         //WTF!
@@ -93,19 +138,31 @@ public class CrimeListFragment extends Fragment {
             super(inflater.inflate(R.layout.list_item_crime, parent, false));
             mTitleTextView = (TextView)itemView.findViewById(R.id.crime_title);
             mDateTextView = (TextView)itemView.findViewById(R.id.crime_date);
+            mSolvedImageView = (ImageView)itemView.findViewById(R.id.crime_solved_image);
             itemView.setOnClickListener(this);
         }
 
 
         public void bind(Crime crime){
             mCrime = crime;
-            mDateTextView.setText(mCrime.getDate().toString());
+
+             mDateFormat= new SimpleDateFormat("EEEE, MMM dd, YYYY.");
+
+            mDateTextView.setText(mDateFormat.format(mCrime.getDate()));
             mTitleTextView.setText(mCrime.getTitle());
+           //mSolvedImageView.setVisibility(View.VISIBLE);
+          //  mSolvedImageView.setVisibility(crime.isSolved() ? View.VISIBLE:View.GONE);
+            Log.d(TAG, "bind: is case solved [" + mSolvedImageView.getVisibility() +"]");
         }
 
+        /*
+        This is where we are going to invoke the crimeActivity and show the crime fragment.
+        Note that the ID and the index are not the same thing...
+         */
         @Override
         public void onClick(View v) {
-            Toast.makeText(getActivity(), mCrime.getTitle() + " clicked", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), mCrime.getId() + " clicked", Toast.LENGTH_SHORT).show();
+            startActivityForResult(CrimePagerActivity.newIntent(getActivity(), mCrime.getId()), CrimePagerActivity.CRIME_ACTIVITY_CODE);
         }
     }
 
@@ -141,5 +198,19 @@ public class CrimeListFragment extends Fragment {
         public int getItemCount() {
             return mCrimes.size();
         }
+
+        /*
+        Going to replace the crime which was updated... no matter what
+        */
+        public int getPosition(UUID incomingCrime){
+            for(int i=0; i<mCrimes.size();i++){
+                if(mCrimes.get(i).getId().equals(incomingCrime)) {
+                   return i;
+                }
+            }
+            return -1;
+        }
+
+
     }
 }
