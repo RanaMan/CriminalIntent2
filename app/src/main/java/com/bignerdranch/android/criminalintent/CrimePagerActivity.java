@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,19 +25,19 @@ public class CrimePagerActivity extends AppCompatActivity {
     public static final String EXTRA_CRIME_ID = "com.bignerdranch.com.EXTRA_CRIME_ID";
     public static final int CRIME_ACTIVITY_CODE = 666;
 
-
+    public static final String TAG = "myTag";
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_crime_pager);
 
+        setContentView(R.layout.activity_crime_pager);
         mCrimes = CrimeLab.getCrimeLab(getApplication()).getCrimes();
         mViewPager = (ViewPager)findViewById(R.id.crime_view_pager);
 
         final UUID incomingCrimeID = (UUID)getIntent().getSerializableExtra(EXTRA_CRIME_ID);
-
         FragmentManager fragmentManager = getSupportFragmentManager();
+
         mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
             @Override
             public Fragment getItem(int position) {
